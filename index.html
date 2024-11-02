@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Shape Drawer</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    .controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 15px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      background-color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <h3>Shape Controls</h3>
+  <label>
+    Shape:
+    <select id="shapeSelect">
+      <option value="circle">3D Sphere</option>
+      <option value="rectangle">3D Box</option>
+      <option value="triangle">3D Pyramid</option>
+      <option value="custom">Custom Path (Blob)</option>
+    </select>
+  </label>
+  <br><br>
+  <label>Color: <input type="color" id="colorPicker" value="#3498db"></label>
+  <br><br>
+  <button id="drawShape">Draw Shape</button>
+  <button id="clearCanvas">Clear Canvas</button>
+</div>
+
+<canvas id="drawingCanvas" width="800" height="600"></canvas>
+
+<script>
+  const canvas = document.getElementById('drawingCanvas');
+  const ctx = canvas.getContext('2d');
+  const shapeSelect = document.getElementById('shapeSelect');
+  const colorPicker = document.getElementById('colorPicker');
+  const drawShapeButton = document.getElementById('drawShape');
+  const clearCanvasButton = document.getElementById('clearCanvas');
+
+  // Draw 3D Sphere
+  function draw3DSphere(color) {
+    const gradient = ctx.createRadialGradient(400, 300, 20, 400, 300, 100);
+    gradient.addColorStop(0, "white");
+    gradient.addColorStop(1, color);
+    ctx.beginPath();
+    ctx.arc(400, 300, 100, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.closePath();
+  }
+
+  // Draw 3D Box
+  function draw3DBox(color) {
+    // Front face
+    ctx.fillStyle = color;
+    ctx.fillRect(300, 200, 200, 150);
+
+    // Top face
+    ctx.fillStyle = shadeColor(color, -20);
+    ctx.beginPath();
+    ctx.moveTo(300, 200);
+    ctx.lineTo(350, 150);
+    ctx.lineTo(550, 150);
+    ctx.lineTo(500, 200);
+    ctx.closePath();
+    ctx.fill();
+
+    // Side face
+    ctx.fillStyle = shadeColor(color, -40);
+    ctx.beginPath();
+    ctx.moveTo(500, 200);
+    ctx.lineTo(550, 150);
+    ctx.lineTo(550, 300);
+    ctx.lineTo(500, 350);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Draw 3D Pyramid
+  function draw3DPyramid(color) {
+    // Front face
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(400, 150);
+    ctx.lineTo(300, 400);
+    ctx.lineTo(500, 400);
+    ctx.closePath();
+    ctx.fill();
+
+    // Left face
+    ctx.fillStyle = shadeColor(color, -20);
+    ctx.beginPath();
+    ctx.moveTo(400, 150);
+    ctx.lineTo(300, 400);
+    ctx.lineTo(350, 375);
+    ctx.closePath();
+    ctx.fill();
+
+    // Right face
+    ctx.fillStyle = shadeColor(color, -40);
+    ctx.beginPath();
+    ctx.moveTo(400, 150);
+    ctx.lineTo(500, 400);
+    ctx.lineTo(450, 375);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Draw Custom Path with Shadow
+  function drawCustomBlob(color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(350, 250);
+    ctx.lineTo(450, 220);
+    ctx.lineTo(500, 300);
+    ctx.lineTo(450, 380);
+    ctx.lineTo(350, 350);
+    ctx.lineTo(300, 300);
+    ctx.closePath();
+    ctx.fill();
+
+    // Add a shadow for 3D effect
+    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    ctx.beginPath();
+    ctx.moveTo(340, 260);
+    ctx.lineTo(440, 230);
+    ctx.lineTo(490, 310);
+    ctx.lineTo(440, 390);
+    ctx.lineTo(340, 360);
+    ctx.lineTo(290, 310);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Utility function to shade color
+  function shadeColor(color, percent) {
+    const num = parseInt(color.slice(1), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    return `#${(
+      0x1000000 + 
+      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 + 
+      (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 + 
+      (B < 255 ? (B < 1 ? 0 : B) : 255)
+    ).toString(16).slice(1)}`;
+  }
+
+  // Event Listener to Draw Selected Shape
+  drawShapeButton.addEventListener('click', () => {
+    const selectedShape = shapeSelect.value;
+    const color = colorPicker.value;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing
+
+    switch (selectedShape) {
+      case 'circle':
+        draw3DSphere(color);
+        break;
+      case 'rectangle':
+        draw3DBox(color);
+        break;
+      case 'triangle':
+        draw3DPyramid(color);
+        break;
+      case 'custom':
+        drawCustomBlob(color);
+        break;
+    }
+  });
+
+  // Event Listener to Clear Canvas
+  clearCanvasButton.addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  });
+</script>
+
+</body>
+</html>
